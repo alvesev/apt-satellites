@@ -1,0 +1,7 @@
+*geany
+/misc
+/*/misc
+/tmp
+/*/tmp
+
+*.pyc
