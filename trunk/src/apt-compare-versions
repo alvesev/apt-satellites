@@ -1,0 +1,100 @@
+#!/usr/bin/python -B
+
+#
+#  Copyright 2013 Alex Vesev
+#
+#  This file is part of Apt Satellites.
+#
+#  Apt Satellites is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  Apt Satellites is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with Apt Satellites.  If not, see <http://www.gnu.org/licenses/>.
+#
+##
+
+
+import apt_pkg
+import argparse
+import sys
+import os
+
+if os.path.exists('/opt/apt-satellites'):
+    sys.path.append('/opt/apt-satellites')
+else:
+    sys.path.append(os.path.dirname(__file__))
+
+import constant
+
+
+exitCodes = {
+        'left < right': 12,
+        'left = right': 22,
+        'left > right': 23,
+        'errorMisc': 4
+    }
+
+comparisionResultSigns = {
+        'left < right': '<',
+        'left = right': '=',
+        'left > right': '>',
+    }
+
+cliArgParser = argparse.ArgumentParser()
+cliArgParser.add_argument("-q", "--quiet", help="set it in order not to printout information", action="store_true") # This is optional argument.
+cliArgParser.add_argument("-l", "--left", help="string with Deb package version, the left part of the equation.")
+cliArgParser.add_argument("-r", "--right", help="string with Deb package version, the right part of the equation.")
+cliArgs = cliArgParser.parse_args()
+
+def main():
+    apt_pkg.init_system()
+
+    verLeft = cliArgs.left
+    verRight = cliArgs.right
+
+    comparisionResult = apt_pkg.version_compare(verLeft, verRight)
+
+    if comparisionResult < 0 :
+        printResult(verLeft, verRight, 'left < right')
+        constant.exitCode = exitCodes['left < right']
+    elif comparisionResult == 0 :
+        printResult(verLeft, verRight, 'left = right')
+        constant.exitCode = exitCodes['left = right']
+    elif comparisionResult > 0 :
+        printResult(verLeft, verRight, 'left > right')
+        constant.exitCode = exitCodes['left > right']
+    else:
+        printErrorMessage("Unknown comparision result " + comparisionResult + " for " + verLeft + " and " + verRight)
+        exitCode = exitCodes['errorMisc']
+
+    exit(constant.exitCode)
+
+
+def printResult(leftValue, rightValue, comparisionResult):
+    if cliArgs.quiet: return
+    sys.stdout.write(
+        leftValue
+        + " " + comparisionResultSigns[comparisionResult]
+        + " " + rightValue + '\n')
+
+def printErrorMessage(message):
+    if cliArgs.quiet: return
+    sys.stderr.write(message + '\n')
+
+
+  #
+ # #
+# # #
+ # #
+  #
+
+
+if __name__ == "__main__":
+    main()

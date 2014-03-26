@@ -1,0 +1,5 @@
+apt-satellites (1) wheezy; urgency=low
+
+  * Initial release.
+
+ -- Alex Vesev <alex.vesev@gmail.com>  Sun, 09 Mar 2014 15:54:40 +0400

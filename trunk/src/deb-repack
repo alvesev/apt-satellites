@@ -1,0 +1,156 @@
+#!/usr/bin/python
+
+#
+#  Copyright 2014 Alex Vesev
+#
+#  This file is part of Apt Satellites.
+#
+#  Apt Satellites is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  Apt Satellites is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with Apt Satellites.  If not, see <http://www.gnu.org/licenses/>.
+#
+##
+
+
+import os
+import sys
+import apt_inst
+import re
+import hashlib
+from collections import OrderedDict
+import argparse
+
+
+cliArgParser = argparse.ArgumentParser()
+cliArgParser.add_argument("--extract", action="store_true", help="Action - do deb-package extraction.")
+cliArgParser.add_argument("--pack", action="store_true", help="Action - pack data into deb-package.")
+cliArgParser.add_argument("--deb-file-donor", dest='fileDebDonor', help="Deb file data donor.")
+cliArgParser.add_argument("--deb-file-acceptor", dest='fileDebAcceptor', help="Deb file data acceptor.")
+cliArgParser.add_argument("--dir-data-container", dest='dirUnpackedContentAll', required=True, help="Directories tree with content as it is expected by 'dpkg-deb --build'. Is used as data acceptor while extraction, is used as data donor while packaging.")
+cliArgs = cliArgParser.parse_args()
+
+
+def main():
+    validatePrelaunch()
+    fileDebDonor = cliArgs.fileDebDonor
+    fileDebAcceptor = cliArgs.fileDebAcceptor
+    dirUnpackedContentAll = os.path.abspath(cliArgs.dirUnpackedContentAll)
+    dirAcceptorContentFiles = dirUnpackedContentAll
+    dirAcceptorControlData = dirUnpackedContentAll + '/DEBIAN'
+    fileMD5Digests = dirAcceptorControlData + '/md5sums'
+
+    if cliArgs.extract:
+        debPack = apt_inst.DebFile(fileDebDonor)
+
+        outputDirs=(dirAcceptorContentFiles, dirAcceptorControlData)
+        createOutputDirs(outputDirs)
+
+        extractPackFiles(debPack, dirAcceptorContentFiles)
+        extractPackControlFiles(debPack, dirAcceptorControlData)
+
+    if cliArgs.pack:
+        writeToFileMD5SumsForContent(dirAcceptorContentFiles, fileMD5Digests)
+        packDirContentAsDebFile(dirAcceptorContentFiles, fileDebAcceptor)
+
+
+  #
+ # #
+# # #
+ # #
+  #
+
+
+def validatePrelaunch():
+
+    if cliArgs.dirUnpackedContentAll:
+        cliArgs.dirUnpackedContentAll = os.path.abspath(cliArgs.dirUnpackedContentAll)
+
+    if not (cliArgs.extract or cliArgs.pack): raise Exception("At least one action must be specified via CLI arguments.")
+
+    if cliArgs.extract:
+        if not cliArgs.fileDebDonor: raise Exception("Input Deb file name is not set via CLI arguments.")
+        if not os.path.isfile(cliArgs.fileDebDonor): raise Exception("Input file '" + cliArgs.fileDebDonor + "' is not found.")
+
+    if cliArgs.pack:
+        if not cliArgs.fileDebAcceptor: raise Exception("Output Deb file name is not set via CLI arguments.")
+        if not cliArgs.dirUnpackedContentAll: raise Exception("Directory '" + cliArgs.dirUnpackedContentAll + "' for deb-package content is not set via CLI arguments.")
+        if not os.path.exists(cliArgs.dirUnpackedContentAll): raise Exception("Directory '" + cliArgs.dirUnpackedContentAll + "' with data to be packed is not found.")
+
+
+def extractPackFiles(debPack, dirAcceptor):
+    debPack.data.extractall(dirAcceptor)
+
+
+def extractPackControlFiles(debPack, dirAcceptor):
+    debPack.control.extractall(dirAcceptor)
+
+
+def createOutputDirs(dirNamesPool):
+    for dirName in dirNamesPool:
+        try:
+            os.stat(dirName)
+        except:
+            os.makedirs(dirName)
+
+
+def getMD5SumsForContent(dirDebContent):
+    fileNamesPool = getFileNamesFromDir(dirDebContent)
+    collectedDigests = OrderedDict({})
+    for fileName in fileNamesPool:
+        collectedDigests[fileName] = getMD5HashAsHexString(dirDebContent + '/' + fileName)
+    return collectedDigests
+
+
+def writeToFileMD5SumsForContent(dirDebContent, nameFileWithDigests):
+    collectedDigests = getMD5SumsForContent(dirDebContent)
+    fileWithDigests = open(nameFileWithDigests, 'w')
+    for fileName, digest in collectedDigests.items():
+        fileWithDigests.write(digest + "  " + fileName + '\n')
+    fileWithDigests.close()
+
+
+def getFileNamesFromDir(dirTarget):
+    fileNamesPool = []
+    for root, subDirs, files in os.walk(dirTarget):
+        if 'DEBIAN' in subDirs: subDirs.remove('DEBIAN'); # Do not take into consideration the 'control' data directory.
+        root = re.sub('^' + dirTarget + '/', '', root)
+        for file in files:
+            if root:
+                fileNamesPool.append(root + '/' + os.path.join(file))
+            else:
+                fileNamesPool.append(file)
+    return fileNamesPool
+
+
+def getMD5HashAsHexString(fileName):
+    f = open(fileName, 'rb')
+    md5 = hashlib.md5()
+    while True:
+        data = f.read(128)
+        if not data: break
+        md5.update(data)
+    return md5.hexdigest()
+
+
+def packDirContentAsDebFile(dirDebContent, fileDebAcceptor):
+    from subprocess import call
+    call(["dpkg-deb", "--build", dirDebContent, fileDebAcceptor])
+
+
+  #
+ # #
+# # #
+ # #
+  #
+
+
+if __name__ == "__main__": main()

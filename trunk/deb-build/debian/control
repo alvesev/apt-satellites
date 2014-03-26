@@ -1,0 +1,13 @@
+Source: apt-satellites
+Section: main
+Priority: standart
+Maintainer: Alex Vesev <alex.vesev@gmail.com>
+Build-Depends: debhelper (>= 8.0.0)
+Standards-Version: 3.9.3
+Homepage: https://github.com/alvesev
+
+Package: apt-satellites
+Architecture: all
+Depends: python2.7, python-apt
+Description: An utility to assist in Apt package versions comparision.
+ An utility to assist in Apt package versions comparision.
