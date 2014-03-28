@@ -28,8 +28,10 @@ import os
 
 if os.path.exists('/opt/apt-satellites'):
     sys.path.append('/opt/apt-satellites')
+elif os.path.exists(os.path.dirname(os.path.abspath(__file__)) + '/lib/python'):
+    sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/lib/python')
 else:
-    sys.path.append(os.path.dirname(__file__))
+    raise Exception("Not evaluated directory with own library.")
 
 import constant
 
