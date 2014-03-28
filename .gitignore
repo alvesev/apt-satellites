@@ -4,4 +4,10 @@
 /tmp
 /*/tmp
 
+/.project
+/.pydevproject
+
+trunk/src-tests/apt-repo/
+trunk/src-tests/gnupg-staff/
+
 *.pyc
