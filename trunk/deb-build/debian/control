@@ -8,6 +8,6 @@ Homepage: https://github.com/alvesev
 
 Package: apt-satellites
 Architecture: all
-Depends: python2.7, python-apt
-Description: An utility to assist in Apt package versions comparision.
- An utility to assist in Apt package versions comparision.
+Depends: python2.7, python-apt, apt-utils, gnupg
+Description: Apt Satellites - some helpers and utilities to assist in Debian packages processing.
+ Apt Satellites - some helpers and utilities to assist in Debian packages processing.

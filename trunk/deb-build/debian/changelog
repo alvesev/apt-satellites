@@ -1,3 +1,9 @@
+apt-satellites (2) wheezy; urgency=low
+
+  * ARG - Apt Repo Generator implemented.
+
+ -- Alex Vesev <alex.vesev@gmail.com>  Fri, 28 Mar 2014 14:18:05 +0400
+
 apt-satellites (1) wheezy; urgency=low
 
   * Initial release.
