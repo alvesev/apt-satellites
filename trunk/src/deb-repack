@@ -146,11 +146,10 @@ def packDirContentAsDebFile(dirDebContent, fileDebAcceptor):
     call(["dpkg-deb", "--build", dirDebContent, fileDebAcceptor])
 
 
-  #
- # #
+#
+# #
 # # #
- # #
-  #
+# # # #
 
 
 if __name__ == "__main__": main()

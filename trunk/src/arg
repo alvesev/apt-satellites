@@ -1,0 +1,74 @@
+#!/usr/bin/python -B
+
+#
+#  Copyright 2013-2014 Alex Vesev
+#
+#  This file is part of Apt Satellites.
+#
+#  Apt Satellites is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  Apt Satellites is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with Apt Satellites.  If not, see <http://www.gnu.org/licenses/>.
+#
+##
+
+
+import os
+import sys
+import datetime
+from time import time
+import argparse
+
+
+defaultInstallPath = '/opt/apt-satellites'
+defaultLibSubDir = 'lib/python'
+thisFileDir = os.path.dirname(os.path.abspath(__file__))
+
+if os.path.exists(defaultInstallPath):
+    sys.path.append(defaultInstallPath)
+elif os.path.exists(thisFileDir + '/' + defaultLibSubDir):
+    sys.path.append(thisFileDir)
+else:
+    raise Exception("Not evaluated directory with own library.")
+
+
+from lib.python.AptRepoGenerator import AptRepoGenerator
+from lib.python.AptRepo import AptRepo
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--dir-top', required=True, dest='dirRepo',
+                        help="Top level directory for Apt repository.")
+parser.add_argument('--dir-gpg-home', required=True, dest='dirGpgHome',
+                        help="Directory with GNU GPG staff, usually it is '~/.gnupg'.")
+parser.add_argument('--gpg-key-id', required=True, dest='gpgKeyId',
+                        help="Identifier of a GPG key to be used, like 'FF88CCDD'.")
+parser.add_argument('-v', '--verbose', dest='verbose', action='store_true',
+                        help="Be verbose.")
+args = parser.parse_args()
+
+
+dirRepo = os.path.abspath(args.dirRepo)
+dirGpgHome = os.path.abspath(args.dirGpgHome) # '~/.gnupg'
+gpgKeyId = args.gpgKeyId # 'FF88CCDD'
+verbose = args.verbose
+
+
+startTime = time()
+sys.stdout.write("Is going to process repository in directory '%s'." % dirRepo + '\n')
+startTime = time()
+
+aptRepo = AptRepo(dirRepo, dirGpgHome, gpgKeyId)
+AptRepoGenerator(aptRepo).generateRepo()
+
+stopTime = time()
+spentTime = str(datetime.timedelta(seconds = stopTime - startTime))
+sys.stdout.write("Job done. See the repository in '%s'. Generation time: %s" % (dirRepo,spentTime) + '\n')

@@ -91,11 +91,10 @@ def printErrorMessage(message):
     sys.stderr.write(message + '\n')
 
 
-  #
- # #
+#
+# #
 # # #
- # #
-  #
+# # # #
 
 
 if __name__ == "__main__":
