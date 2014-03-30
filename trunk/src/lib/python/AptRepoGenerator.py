@@ -34,10 +34,11 @@ class AptRepoGenerator:
     """
     This class is main entrance point for Apt repository generation actions. 
     """
-    def __init__(self, aptRepo):
+    def __init__(self, aptRepo, keepTmpFilesOnExit = False):
         if str(aptRepo.__class__.__name__) != 'AptRepo':
             raise Exception("Unexpected argument class '%s' among constructor arguments in file '%s'." % (str(aptRepo.__class__.__name__), __file__))
         self.repo = aptRepo
+        self.keepTmpFilesOnExit = keepTmpFilesOnExit
 
     def generateRepo(self):
       
@@ -75,6 +76,7 @@ class AptRepoGenerator:
     
     
     def removeTemporaryFiles(self):
+        if self.keepTmpFilesOnExit: return True
         dirTop = self.repo.dir
         for parentDir, subDirs, files in os.walk(dirTop):  # @UnusedVariable
             for fileName in files:

@@ -44,31 +44,42 @@ from lib.python.AptRepoGenerator import AptRepoGenerator
 from lib.python.AptRepo import AptRepo
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--dir-top', required=True, dest='dirRepo',
-                        help="Top level directory for Apt repository.")
-parser.add_argument('--dir-gpg-home', required=True, dest='dirGpgHome',
-                        help="Directory with GNU GPG staff, usually it is '~/.gnupg'.")
-parser.add_argument('--gpg-key-id', required=True, dest='gpgKeyId',
-                        help="Identifier of a GPG key to be used, like 'FF88CCDD'.")
-parser.add_argument('-v', '--verbose', dest='verbose', action='store_true',
-                        help="Be verbose.")
-args = parser.parse_args()
+def main():
+    args = evaluateCLIArguments()
+    
+    dirRepo = os.path.abspath(args.dirRepo)
+    dirGpgHome = os.path.abspath(args.dirGpgHome) # '~/.gnupg'
+    gpgKeyId = args.gpgKeyId # 'FF88CCDD'
+    keepTmpFilesOnExit = args.keepTmpFilesOnExit
+    verbose = args.verbose  # XXX - @UnusedVariable
+    
+    
+    startTime = time()
+    sys.stdout.write("Is going to process repository in directory '%s'." % dirRepo + '\n')
+    
+    aptRepo = AptRepo(dirRepo, dirGpgHome, gpgKeyId)
+    AptRepoGenerator(aptRepo, keepTmpFilesOnExit).generateRepo()
+    
+    stopTime = time()
+    spentTime = str(datetime.timedelta(seconds = stopTime - startTime))
+    sys.stdout.write("Job done. See the repository in '%s'. Generation time: %s" % (dirRepo,spentTime) + '\n')
 
 
-dirRepo = os.path.abspath(args.dirRepo)
-dirGpgHome = os.path.abspath(args.dirGpgHome) # '~/.gnupg'
-gpgKeyId = args.gpgKeyId # 'FF88CCDD'
-verbose = args.verbose
+def evaluateCLIArguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--dir-top', required=True, dest='dirRepo',
+                            help="Top level directory for Apt repository.")
+    parser.add_argument('--dir-gpg-home', required=True, dest='dirGpgHome',
+                            help="Directory with GNU GPG staff, usually it is '~/.gnupg'.")
+    parser.add_argument('--gpg-key-id', required=True, dest='gpgKeyId',
+                            help="Identifier of a GPG key to be used, like 'FF88CCDD'.")
+    parser.add_argument('--keep-tmp', dest='keepTmpFilesOnExit', action='store_true',
+                            help="Will keep temporary files - Apt configurations, etc.")
+    parser.add_argument('-v', '--verbose', dest='verbose', action='store_true',
+                            help="Be verbose.")
+    args = parser.parse_args()
+    return args
 
 
-startTime = time()
-sys.stdout.write("Is going to process repository in directory '%s'." % dirRepo + '\n')
-startTime = time()
-
-aptRepo = AptRepo(dirRepo, dirGpgHome, gpgKeyId)
-AptRepoGenerator(aptRepo).generateRepo()
-
-stopTime = time()
-spentTime = str(datetime.timedelta(seconds = stopTime - startTime))
-sys.stdout.write("Job done. See the repository in '%s'. Generation time: %s" % (dirRepo,spentTime) + '\n')
+if __name__ == '__main__':
+    main()
