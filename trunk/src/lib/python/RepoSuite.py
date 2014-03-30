@@ -33,7 +33,8 @@ class RepoSuite:
 
         self.name = name
         self.codename = str(codename)
-        self.componentsPool = componentsPool
+        if componentsPool: self.componentsPool = componentsPool
+        else: self.componentsPool = {}
         self.origin = str(origin)
         self.label = str(label)
         self.description = str(description)
